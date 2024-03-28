@@ -43,6 +43,9 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'drf_spectacular',
     'corsheaders',
+    'oauth2_provider',
+    'core',
+    'chat',
 ]
 
 MIDDLEWARE = [
