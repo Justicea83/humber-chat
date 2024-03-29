@@ -17,6 +17,7 @@ class ChatView(APIView):
         serializer = ChatSerializer(data=request.data)
 
         if serializer.is_valid():
-            serializer.respond_to_chat()
-            return Response()
+            return Response({
+                'message': serializer.respond_to_chat()
+            })
         return Response(status=status.HTTP_400_BAD_REQUEST)
