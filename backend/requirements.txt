@@ -4,13 +4,13 @@ drf-spectacular==0.27.0
 python-dotenv==1.0.0
 django-cors-headers==4.3.1
 gunicorn==21.2.0
-openai==1.12.0
 ipython==8.22.2
 logparser==0.8.2
 langchain==0.1.11
 langchain-openai==0.0.8
 langchain-exa==0.0.1
-langdetect==1.0.9
 django-oauth-toolkit==2.3.0
 redis==5.0.1
 django-redis==5.4.0
+googletrans-py==4.0.0
+langdetect==1.0.9

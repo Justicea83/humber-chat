@@ -1,3 +1,4 @@
+from rest_framework import status
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -13,4 +14,9 @@ class ChatView(APIView):
     permission_classes = []
 
     def post(self, request: Request):
-        return Response()
+        serializer = ChatSerializer(data=request.data)
+
+        if serializer.is_valid():
+            serializer.respond_to_chat()
+            return Response()
+        return Response(status=status.HTTP_400_BAD_REQUEST)
