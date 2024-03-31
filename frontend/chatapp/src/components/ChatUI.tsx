@@ -21,7 +21,7 @@ const ChatUI = () => {
     useEffect(() => {
         const chats = localStorage.getItem('messages')
         if (chats) {
-            setMessages(JSON.parse(chats) as Chat[])
+            //setMessages(JSON.parse(chats) as Chat[])
         }
     }, [])
 
@@ -50,8 +50,6 @@ const ChatUI = () => {
     const streamMessageFromBot = (chats: Chat[], prompt: string, messageId: string) => {
         const url = getPromptStreamEndpoint(prompt)
         const chatIndex = chats.findIndex(message => message.id === messageId)
-        console.log('[chatIndex]', chatIndex)
-        console.log('[messageId]', messageId)
 
         if (chatIndex === -1) {
             return
@@ -83,21 +81,39 @@ const ChatUI = () => {
     return (
         <div className="flex h-[97vh] w-full flex-col">
             {/* Prompt Messages */}
-            <ScrollToBottom className="flex-1 h-[90vh]">
-                <div
-                    className="overflow-y-auto rounded-xl p-4 text-sm leading-6 text-slate-900  dark:text-slate-300 sm:text-base sm:leading-7"
-                >
-                    {
-                        messages.map(message => {
-                            if (message.from === 'bot') {
-                                return <AIMessage key={message.id} chat={message}/>
-                            } else {
-                                return <HumanMessage key={message.id} chat={message}/>
+            {
+                messages && messages.length > 0 ? (
+                    <ScrollToBottom className="flex-1 h-[90vh]">
+                        <div
+                            className="overflow-y-auto rounded-xl p-4 text-sm leading-6 text-slate-900  dark:text-slate-300 sm:text-base sm:leading-7"
+                        >
+                            {
+                                messages.map(message => {
+                                    if (message.from === 'bot') {
+                                        return <AIMessage key={message.id} chat={message}/>
+                                    } else {
+                                        return <HumanMessage key={message.id} chat={message}/>
+                                    }
+                                })
                             }
-                        })
-                    }
-                </div>
-            </ScrollToBottom>
+                        </div>
+                    </ScrollToBottom>
+                ) : (
+                    <div
+                        className="flex justify-center items-center h-full">
+                        <div className="text-center">
+                            <h2 className="text-slate-900 dark:text-slate-300 font-bold text-2xl">
+                                HumberChat
+                            </h2>
+                            <h2 className="text-slate-900 dark:text-slate-300 mt-2 text-xl">
+                                How can I help you today?
+                            </h2>
+                        </div>
+                    </div>
+
+                )
+            }
+
 
             <MessageInput onPrompt={handlePrompt} loading={loading}/>
         </div>
