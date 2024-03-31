@@ -1,4 +1,5 @@
 import {Chat} from "../@types/chat";
+import RenderMarkdown from "./RenderMarkdown";
 
 interface AIMessageProps {
     chat: Chat
@@ -36,13 +37,10 @@ const AIMessage = ({chat}: AIMessageProps) => {
                 <img
                     className="mr-2 flex h-8 w-8 rounded-full sm:mr-4"
                     src="https://dummyimage.com/256x256/354ea1/ffffff&text=G"
+                    alt="pic"
                 />
 
-                <div className="rounded-xl">
-                    <p>
-                        {chat.message}
-                    </p>
-                </div>
+                <RenderMarkdown content={chat.message}/>
             </div>
         </>
     )

@@ -64,7 +64,7 @@ class ChatSerializer(serializers.Serializer):
     @staticmethod
     def search_humber(original_query: str, query: str, lang: str):
         retriever = ExaSearchRetriever(
-            k=3,
+            k=5,
             include_domains=[
                 'https://humber.ca',
                 'https://library.humber.ca',
