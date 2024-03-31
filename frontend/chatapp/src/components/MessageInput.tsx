@@ -1,4 +1,4 @@
-import {FormEvent, useEffect, useRef, useState} from "react";
+import {FormEvent, KeyboardEventHandler, useEffect, useRef, useState} from "react";
 
 interface MessageInputProps {
     onPrompt: (prompt: string) => void
@@ -19,7 +19,7 @@ const MessageInput = ({onPrompt, loading}: MessageInputProps) => {
         setPrompt('')
     }
 
-    const handleKeyDown = (event: KeyboardEvent) => {
+    const handleKeyDown: KeyboardEventHandler<HTMLTextAreaElement> = (event) => {
         if (event.key === 'Enter' && !event.shiftKey) {
             handleSubmit(event);
         }
