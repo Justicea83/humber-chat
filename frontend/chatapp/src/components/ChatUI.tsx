@@ -27,7 +27,6 @@ const ChatUI = () => {
 
     const handlePrompt = (prompt: string) => {
         setLoading(true)
-        console.log('[prompt]', prompt)
         const botMessageId = uuidv4()
         const incomingChats: Chat[] = [
             {
@@ -57,7 +56,6 @@ const ChatUI = () => {
         if (chatIndex === -1) {
             return
         }
-        console.log('[url]', url)
 
         const eventSource = new EventSource(url);
 
@@ -73,8 +71,6 @@ const ChatUI = () => {
             const chat = chats[chatIndex]
             chat.message = chat.message += data.text
             chats[chatIndex] = chat
-            console.log('[data]', data)
-            console.log('chat', chat)
             setMessages([...chats])
         };
 
@@ -102,7 +98,6 @@ const ChatUI = () => {
                     }
                 </div>
             </ScrollToBottom>
-
 
             <MessageInput onPrompt={handlePrompt} loading={loading}/>
         </div>

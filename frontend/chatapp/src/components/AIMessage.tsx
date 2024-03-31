@@ -36,7 +36,7 @@ const AIMessage = ({chat}: AIMessageProps) => {
             >
                 <img
                     className="mr-2 flex h-8 w-8 rounded-full sm:mr-4"
-                    src="https://dummyimage.com/256x256/354ea1/ffffff&text=G"
+                    src="https://dummyimage.com/256x256/354ea1/ffffff&text=AI"
                     alt="pic"
                 />
 
