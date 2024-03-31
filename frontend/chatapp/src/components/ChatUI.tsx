@@ -21,7 +21,7 @@ const ChatUI = () => {
     useEffect(() => {
         const chats = localStorage.getItem('messages')
         if (chats) {
-            //setMessages(JSON.parse(chats) as Chat[])
+            setMessages(JSON.parse(chats) as Chat[])
         }
     }, [])
 
