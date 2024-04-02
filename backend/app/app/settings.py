@@ -162,6 +162,7 @@ SPECTACULAR_SETTINGS = {
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:5173",
+    "http://40.90.252.117:2001",
 ]
 
 CACHES = {
