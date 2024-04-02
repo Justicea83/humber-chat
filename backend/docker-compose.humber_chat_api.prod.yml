@@ -1,7 +1,7 @@
 version: "3.9"
 
 services:
-  app:
+  humber_chat_api:
     container_name: humber_chat_api
     image: crossjobs.azurecr.io/humber_chat_api:latest
     environment:
