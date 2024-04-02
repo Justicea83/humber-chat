@@ -131,6 +131,6 @@ jobs:
                           docker-compose -f docker-compose.humber_chat_api.${{ env.CURRENT_ENV }}.yml pull
                         fi
                       
-                        LANGCHAIN_PROJECT="${{ secrets.LANGCHAIN_PROJECT }}" LANGCHAIN_API_KEY="${{ secrets.LANGCHAIN_API_KEY }}" LANGCHAIN_TRACING_V2="${{ secrets.LANGCHAIN_TRACING_V2 }}" EXA_API_KEY="${{ secrets.EXA_API_KEY }}" APP_SECRET="${{ secrets.APP_SECRET }}" OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}" VAULT_URL="${{ secrets.VAULT_URL }}" AZURE_TENANT_ID="${{ secrets.AZURE_TENANT_ID }}" AZURE_CLIENT_ID="${{ secrets.AZURE_CLIENT_ID }}" AZURE_CLIENT_SECRET="${{ secrets.AZURE_CLIENT_SECRET }}" docker-compose -f docker-compose.humber_chat_api.${{ env.CURRENT_ENV }}.yml up -d --build
+                        LANGCHAIN_PROJECT="${{ env.LANGCHAIN_PROJECT }}" LANGCHAIN_API_KEY="${{ env.LANGCHAIN_API_KEY }}" LANGCHAIN_TRACING_V2="${{ env.LANGCHAIN_TRACING_V2 }}" EXA_API_KEY="${{ env.EXA_API_KEY }}" APP_SECRET="${{ env.APP_SECRET }}" OPENAI_API_KEY="${{ env.OPENAI_API_KEY }}" VAULT_URL="${{ secrets.VAULT_URL }}" AZURE_TENANT_ID="${{ secrets.AZURE_TENANT_ID }}" AZURE_CLIENT_ID="${{ secrets.AZURE_CLIENT_ID }}" AZURE_CLIENT_SECRET="${{ secrets.AZURE_CLIENT_SECRET }}" docker-compose -f docker-compose.humber_chat_api.${{ env.CURRENT_ENV }}.yml up -d --build
                         
                         docker image prune -a -f
