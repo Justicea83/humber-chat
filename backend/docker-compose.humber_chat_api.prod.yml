@@ -1,0 +1,24 @@
+version: "3.9"
+
+services:
+  app:
+    container_name: humber_chat_api
+    image: crossjobs.azurecr.io/humber_chat_api:latest
+    environment:
+      AZURE_VAULT_KEY: "humberchat-api-prod"
+      DEV: false
+      AZURE_CLIENT_ID: "${AZURE_CLIENT_ID}"
+      AZURE_CLIENT_SECRET: "${AZURE_CLIENT_SECRET}"
+      AZURE_TENANT_ID: "${AZURE_TENANT_ID}"
+      VAULT_URL: "${VAULT_URL}"
+      APP_SECRET: "${APP_SECRET}"
+      OPENAI_API_KEY: "${OPENAI_API_KEY}"
+      EXA_API_KEY: "${EXA_API_KEY}"
+      LANGCHAIN_TRACING_V2: "${LANGCHAIN_TRACING_V2}"
+      LANGCHAIN_API_KEY: "${LANGCHAIN_API_KEY}"
+      LANGCHAIN_PROJECT: "${LANGCHAIN_PROJECT}"
+    ports:
+      - "${FORWARD_APP_PORT:-2000}:8000"
+    command: >
+      sh -c "gunicorn app.wsgi:application -b 0.0.0.0:8000"
+    restart: always
