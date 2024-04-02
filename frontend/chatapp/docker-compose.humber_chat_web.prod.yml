@@ -1,0 +1,8 @@
+version: "3.7"
+services:
+  humber_chat_web:
+    restart: always
+    container_name: humber_chat_web
+    image: crossjobs.azurecr.io/humber_chat_web:latest
+    ports:
+      - "2001:80"
