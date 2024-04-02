@@ -1,0 +1,142 @@
+name: Build and Push docker image
+
+on:
+    push:
+        branches:
+            - main
+
+jobs:
+    build-and-deploy:
+        runs-on: ubuntu-latest
+        env:
+            IMAGE_TAG: latest
+            IMAGE_NAME: humber_chat_api
+            REPOSITORY: crossjobs
+        steps:
+            -   name: Checkout code
+                working-directory: ./backend
+                uses: actions/checkout@v2
+
+            -   name: Set up environment variables for VM credentials
+                run: |
+                    if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+                      # setup the environment variable for production
+                    
+                      echo "CURRENT_ENV=prod" >> $GITHUB_ENV
+
+                      echo "VM_HOST=${{ secrets.VM_HOST_PROD }}" >> $GITHUB_ENV
+                    
+                      echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY_PROD }}" >> $GITHUB_ENV
+                      echo "APP_SECRET=${{ secrets.APP_SECRET_PROD }}" >> $GITHUB_ENV
+                      echo "EXA_API_KEY=${{ secrets.EXA_API_KEY_PROD }}" >> $GITHUB_ENV
+                      echo "LANGCHAIN_TRACING_V2=${{ secrets.LANGCHAIN_TRACING_V2_PROD }}" >> $GITHUB_ENV
+                      echo "LANGCHAIN_API_KEY=${{ secrets.LANGCHAIN_API_KEY_PROD }}" >> $GITHUB_ENV
+                      echo "LANGCHAIN_PROJECT=${{ secrets.LANGCHAIN_PROJECT_PROD }}" >> $GITHUB_ENV
+                    fi
+                working-directory: ./backend
+
+            -   name: Clear VM Directory
+                uses: appleboy/ssh-action@master
+                working-directory: ./backend
+                with:
+                    host: ${{ env.VM_HOST }}
+                    username: azureuser
+                    key: ${{ (env.CURRENT_ENV == 'dev' && secrets.VM_SSH_SECRET_DEV) || (env.CURRENT_ENV == 'prod' && secrets.VM_SSH_SECRET_PROD) }}
+                    script: |
+                        cd /home/azureuser
+                        rm -rf docker-compose.$IMAGE_NAME.${{ env.CURRENT_ENV }}.yml
+
+            -   name: Transfer docker-compose to VM
+                working-directory: ./backend
+                run: |
+                    # Write the SSH private key to a temporary file
+                    if [[ "${{ env.CURRENT_ENV }}" == "dev" ]]; then
+                      echo "${{ secrets.VM_SSH_SECRET_DEV }}" > ssh_key
+                    elif [[ "${{ env.CURRENT_ENV }}" == "prod" ]]; then
+                      echo "${{ secrets.VM_SSH_SECRET_PROD }}" > ssh_key
+                    fi
+
+                    chmod 600 ssh_key
+
+                    # Use the temporary file for SCP
+                    scp -o StrictHostKeyChecking=no -i ssh_key docker-compose.$IMAGE_NAME.${{ env.CURRENT_ENV }}.yml azureuser@${{ env.VM_HOST }}:/home/azureuser/
+                    
+                    # Clean up by removing the temporary SSH key file
+                    rm -f ssh_key
+
+            -   name: Login to Azure
+                uses: azure/login@v1
+                working-directory: ./backend
+                with:
+                    creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+            -   name: 'Build and push image'
+                working-directory: ./backend
+                uses: azure/docker-login@v1
+                with:
+                    login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
+                    username: ${{ secrets.REGISTRY_USERNAME }}
+                    password: ${{ secrets.REGISTRY_PASSWORD }}
+
+            -   run: |
+                    docker build . --no-cache -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/$IMAGE_NAME:$IMAGE_TAG
+                    docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/$IMAGE_NAME:$IMAGE_TAG
+                working-directory: ./backend
+
+            -   name: Deploy to EC2
+                working-directory: ./backend
+                uses: appleboy/ssh-action@master
+                with:
+                    host: ${{ env.VM_HOST }}
+                    command_timeout: 200m
+                    username: azureuser
+                    key: ${{ (env.CURRENT_ENV == 'dev' && secrets.VM_SSH_SECRET_DEV) || (env.CURRENT_ENV == 'prod' && secrets.VM_SSH_SECRET_PROD) }}
+                    script: |
+                        # Navigate to the directory where docker-compose.dev.yml is located
+                        cd /home/azureuser
+
+                        # Ensure AZURE CLI is installed and configured
+                        if ! command -v az &> /dev/null
+                        then
+                              # Get packages needed for the installation process:
+                              sudo apt-get update
+                              sudo apt-get install ca-certificates curl apt-transport-https lsb-release gnupg
+
+                              # Download and install the Microsoft signing key
+                                sudo mkdir -p /etc/apt/keyrings
+                                curl -sLS https://packages.microsoft.com/keys/microsoft.asc |
+                                gpg --dearmor |
+                                sudo tee /etc/apt/keyrings/microsoft.gpg > /dev/null
+                                sudo chmod go+r /etc/apt/keyrings/microsoft.gpg
+
+                                # Add the Azure CLI software repository
+                                AZ_DIST=$(lsb_release -cs)
+                                    echo "deb [arch=`dpkg --print-architecture` signed-by=/etc/apt/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/azure-cli/ $AZ_DIST main" |
+                                    sudo tee /etc/apt/sources.list.d/azure-cli.list
+
+                                # Install the CLI
+                                sudo apt-get update
+                                sudo apt-get install azure-cli
+
+                                echo "Azure CLI is installed successfully."
+
+                        else
+                            echo "Azure CLI is already installed."
+                        fi
+
+                        az login --service-principal -u "${{ secrets.AZURE_CLIENT_ID }}" -p "${{ secrets.AZURE_CLIENT_SECRET }}" --tenant "${{ secrets.AZURE_TENANT_ID }}"
+
+                        # Log in to Azure Container Registry
+                        echo "Logging in to Azure Container Registry..."
+
+                        az acr login --name "${{ env.REPOSITORY }}"
+                        
+                        DB_HOST="db" PGADMIN_DEFAULT_PASSWORD="${{ env.PGADMIN_DEFAULT_PASSWORD }}" PGADMIN_DEFAULT_EMAIL="${{ env.PGADMIN_DEFAULT_EMAIL }}" DB_USERNAME="${{ env.DB_USERNAME }}" DB_DATABASE="${{ env.DB_DATABASE }}" DB_PASSWORD="${{ env.DB_PASSWORD }}" VAULT_URL="${{ secrets.VAULT_URL }}" AZURE_TENANT_ID="${{ secrets.AZURE_TENANT_ID }}" AZURE_CLIENT_ID="${{ secrets.AZURE_CLIENT_ID }}" AZURE_CLIENT_SECRET="${{ secrets.AZURE_CLIENT_SECRET }}" docker-compose -f docker-compose.${{ env.CURRENT_ENV }}.api.static.yml up -d
+
+                        if [ $( docker ps -a | grep ${{ env.IMAGE_NAME }} | wc -l ) -gt 0 ]; then
+                          docker-compose -f docker-compose.${{ env.CURRENT_ENV }}.api.yml pull
+                        fi
+                      
+                        LANGCHAIN_PROJECT="${{ secrets.LANGCHAIN_PROJECT }}" LANGCHAIN_API_KEY="${{ secrets.LANGCHAIN_API_KEY }}" LANGCHAIN_TRACING_V2="${{ secrets.LANGCHAIN_TRACING_V2 }}" EXA_API_KEY="${{ secrets.EXA_API_KEY }}" APP_SECRET="${{ secrets.APP_SECRET }}" OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}" VAULT_URL="${{ secrets.VAULT_URL }}" AZURE_TENANT_ID="${{ secrets.AZURE_TENANT_ID }}" AZURE_CLIENT_ID="${{ secrets.AZURE_CLIENT_ID }}" AZURE_CLIENT_SECRET="${{ secrets.AZURE_CLIENT_SECRET }}" docker-compose -f docker-compose.$IMAGE_NAME.${{ env.CURRENT_ENV }}.yml up -d --build
+                        
+                        docker image prune -a -f
