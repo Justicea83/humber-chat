@@ -12,9 +12,9 @@ jobs:
             IMAGE_TAG: latest
             IMAGE_NAME: humber_chat_api
             REPOSITORY: crossjobs
+
         steps:
             -   name: Checkout code
-                working-directory: ./backend
                 uses: actions/checkout@v2
 
             -   name: Set up environment variables for VM credentials
