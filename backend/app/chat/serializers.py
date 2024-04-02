@@ -110,7 +110,8 @@ class ChatSerializer(serializers.Serializer):
         ])
 
         llm = ChatOpenAI(
-            stream=True
+            stream=True,
+            model="gpt-4-0125-preview"
         )
 
         parser = StrOutputParser()
